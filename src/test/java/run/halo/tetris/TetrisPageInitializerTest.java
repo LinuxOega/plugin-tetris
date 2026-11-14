@@ -176,4 +176,39 @@ class TetrisPageInitializerTest {
             "src=\"/plugins/plugin-tetris/assets/tetris/index.html\""));
         assertTrue(body.contains("data-tetris"));
     }
+
+    @Test
+    void upgradesLegacyPluginContentInPlace() {
+        var existing = TetrisPageInitializer.buildPage();
+        var legacy = TetrisPageInitializer.buildSnapshot(
+            "<iframe data-tetris style='height:clamp(720px,92vh,900px)'></iframe>");
+        when(client.fetch(SinglePage.class, TetrisPageInitializer.PAGE_NAME))
+            .thenReturn(Mono.just(existing));
+        when(client.fetch(Snapshot.class, TetrisPageInitializer.SNAPSHOT_NAME))
+            .thenReturn(Mono.just(legacy));
+        when(client.update(any(Snapshot.class)))
+            .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+
+        initializer().ensurePage().block(TIMEOUT);
+
+        verify(client).update(any(Snapshot.class));
+        assertTrue(legacy.getSpec().getRawPatch().contains(TetrisPageInitializer.FIT_MARKER));
+        assertEquals(legacy.getSpec().getRawPatch(), legacy.getSpec().getContentPatch());
+        verify(client, never()).update(any(SinglePage.class));
+    }
+
+    @Test
+    void ownerEditedContentIsNeverReplaced() {
+        var existing = TetrisPageInitializer.buildPage();
+        var custom = TetrisPageInitializer.buildSnapshot("<p>站点自定义内容</p>");
+        when(client.fetch(SinglePage.class, TetrisPageInitializer.PAGE_NAME))
+            .thenReturn(Mono.just(existing));
+        when(client.fetch(Snapshot.class, TetrisPageInitializer.SNAPSHOT_NAME))
+            .thenReturn(Mono.just(custom));
+
+        initializer().ensurePage().block(TIMEOUT);
+
+        verify(client, never()).update(any(Extension.class));
+        assertEquals("<p>站点自定义内容</p>", custom.getSpec().getRawPatch());
+    }
 }

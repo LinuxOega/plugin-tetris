@@ -199,31 +199,51 @@
         + num(parseFloat(style.marginTop)) + num(parseFloat(style.marginBottom));
     };
 
-    const FRAME_MIN = 420;
+    // A small game is fine; needing to zoom out or scroll the browser is not.
+    // Tetris needs a taller board than 2048 (10 x 20), so it claims a full
+    // viewport whenever the theme header leaves too little room.
+    const FRAME_MIN = 240;
     const FRAME_MAX = 880;
+    const FRAME_GAP = 16;
+    const COMFORT_MIN = 420;
     const BOARD_MAX = 320;
-    const BOARD_MIN = 150;
+    const BOARD_MIN = 100;
     const BOARD_RATIO = 2; // 10 columns x 20 rows
     let lastFrame = -1;
     let lastBoard = -1;
     let queued = false;
+    let autoScrolled = false;
 
     function fitFrame() {
       if (!frame || !frame.style) return;
       try {
+        const host = window.parent;
         const viewport = window.parent.innerHeight;
         if (!viewport) return;
-        const top = frame.getBoundingClientRect().top;
-        // frameElement's rect is relative to the host document viewport. While
-        // the iframe is still below the fold (lazy loading, long article),
-        // keep the host page's dvh-based height instead of shrinking it.
-        if (top > viewport * 0.85) return;
-        const offset = Math.max(0, Math.min(num(top), viewport));
+        const top = num(frame.getBoundingClientRect().top);
+        // Always resize the host frame to the space that actually remains in
+        // the viewport, even for pages created by older plugin versions with a
+        // fixed 720px iframe. Shrinking it is what makes 100% zoom playable.
+        const offset = Math.max(0, Math.min(top, viewport));
+        const remaining = viewport - offset - FRAME_GAP;
         const wanted = Math.round(Math.max(FRAME_MIN,
-          Math.min(FRAME_MAX, viewport - offset - 24)));
+          Math.min(FRAME_MAX, remaining)));
         if (wanted !== lastFrame) {
           lastFrame = wanted;
           frame.style.height = `${wanted}px`;
+        }
+        if (!autoScrolled && remaining < COMFORT_MIN) {
+          autoScrolled = true;
+          const docTop = top + num(host.scrollY) - 8;
+          if (docTop > 0 && typeof host.scrollTo === 'function') {
+            host.scrollTo(0, docTop);
+            const expanded = Math.round(Math.max(FRAME_MIN,
+              Math.min(FRAME_MAX, viewport - 8 - FRAME_GAP)));
+            if (expanded !== lastFrame) {
+              lastFrame = expanded;
+              frame.style.height = `${expanded}px`;
+            }
+          }
         }
       } catch (e) { /* restricted frame: keep host height */ }
     }

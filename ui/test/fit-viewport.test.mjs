@@ -45,6 +45,8 @@ test('all iframe fragments use viewport-relative clamped heights', () => {
     assert.match(body, /100vh/, `${file} keeps a vh fallback`);
     assert.match(body, /height:clamp\(/, `${file} clamps the height`);
     assert.doesNotMatch(body, /https?:\/\//, `${file} stays same-origin relative`);
+    // Lazy loading can defer the script that shrinks a legacy 720px frame.
+    assert.doesNotMatch(body, /loading="lazy"/, `${file} loads the game eagerly`);
   }
 });
 
@@ -71,9 +73,19 @@ test('controller measures the host frame and resizes the 10x20 board', () => {
     assert.match(app, pattern, `app.js missing ${pattern}`);
   }
   assert.match(app, /BOARD_MAX = 320/);
-  assert.match(app, /BOARD_MIN = 150/);
+  assert.match(app, /BOARD_MIN = 100/);
   assert.match(app, /BOARD_RATIO = 2/);
   assert.match(app, /availableHeight \/ BOARD_RATIO/);
+});
+
+test('controller never gives up on a frame that starts below the fold', () => {
+  // Older builds skipped resizing when top > viewport * 0.85, which left the
+  // 720px iframe created by v1.0.0 pages untouched and forced browser zoom-out.
+  assert.doesNotMatch(app, /top > viewport \* 0\.85/);
+  assert.match(app, /FRAME_MIN = 240/);
+  assert.match(app, /COMFORT_MIN = 420/);
+  assert.match(app, /host\.scrollTo/);
+  assert.match(app, /autoScrolled/);
 });
 
 test('standalone and single-file builds carry the same fit logic', () => {
