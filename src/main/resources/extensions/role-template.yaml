@@ -1,0 +1,34 @@
+# The public leaderboard API is intentionally read/create only and aggregated
+# to the anonymous role so the standalone front-end page works for visitors.
+# Write/delete access to the underlying TetrisScore extension is never public.
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: plugin-tetris-role-anonymous
+  labels:
+    halo.run/role-template: "true"
+    halo.run/hidden: "true"
+    rbac.authorization.halo.run/aggregate-to-anonymous: "true"
+rules:
+  - apiGroups: ["api.tetris.halo.run"]
+    resources: ["scores"]
+    verbs: ["get", "list", "create"]
+
+---
+# Optional role template for administrators who need to manage stored scores.
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: plugin-tetris-role-manage
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/module: "俄罗斯方块"
+    rbac.authorization.halo.run/display-name: "俄罗斯方块排行榜管理"
+rules:
+  - apiGroups: ["tetris.halo.run"]
+    resources: ["tetrisscores"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  - apiGroups: ["api.tetris.halo.run"]
+    resources: ["scores"]
+    verbs: ["get", "list", "create"]

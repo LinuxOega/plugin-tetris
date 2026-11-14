@@ -1,0 +1,11 @@
+# Expose the standalone game page at:
+#   /plugins/plugin-tetris/assets/tetris/index.html
+# Files are read from src/main/resources/static/tetris relative to the plugin root.
+apiVersion: plugin.halo.run/v1alpha1
+kind: ReverseProxy
+metadata:
+  name: plugin-tetris-static
+rules:
+  - path: /tetris/**
+    file:
+      directory: static/tetris

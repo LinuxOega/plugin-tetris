@@ -1,0 +1,60 @@
+plugins {
+    id 'java'
+    id "io.freefair.lombok" version "9.2.0"
+    id "run.halo.plugin.devtools" version "0.9.0"
+}
+
+group 'run.halo.tetris'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Versions of run.halo.app:api and Spring Boot come from the platform BOM.
+    implementation platform('run.halo.tools.platform:plugin:2.27.3')
+    compileOnly 'run.halo.app:api'
+
+    testImplementation 'run.halo.app:api'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.release = 21
+}
+
+// Frontend-only mode: Halo registers Console menu items from
+// resources/ui/ui-plugin.json, so this plugin intentionally ships no Console UI.
+// The ui/ subproject is still built for its Node test suite and remains the
+// single source of truth for the Tetris rules (scripts/build-standalone.mjs).
+// To restore the Console page later, re-add a Copy task from ui/build/dist
+// into build/resources/main/ui and remove the two exclusions below.
+tasks.named('processResources') {
+    doLast {
+        def staleUi = layout.buildDirectory.dir('resources/main/ui').get().asFile
+        if (staleUi.exists()) {
+            staleUi.deleteDir()
+        }
+    }
+}
+
+tasks.named('jar') {
+    exclude 'ui/**'
+    exclude 'ui-plugin.json'
+}
+
+halo {
+    version = '2.27'
+}

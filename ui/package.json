@@ -1,0 +1,13 @@
+{
+  "name": "plugin-tetris-ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "standalone": "node ../scripts/build-standalone.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0"
+  }
+}

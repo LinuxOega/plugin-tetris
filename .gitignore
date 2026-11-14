@@ -1,0 +1,18 @@
+# 依赖与构建产物
+node_modules/
+build/
+.gradle/
+dist/
+workplace/
+ui/build/
+
+# 本地工具 / 编辑器 / 会话数据
+.workbuddy/
+.idea/
+.vscode/
+*.log
+.DS_Store
+
+# 插件 JAR 不入版本库（请从 Release 下载或本地构建）
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
