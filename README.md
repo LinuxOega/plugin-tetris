@@ -70,6 +70,18 @@ plugin-tetris/
 
 ---
 
+## 下载（推荐）
+
+不想装 JDK / Gradle 时，直接用 GitHub Release 里已构建好的 JAR：
+
+| 版本 | 文件 | 大小 | SHA-256 |
+| --- | --- | --- | --- |
+| **v1.0.0（最新）** | [plugin-tetris-1.0.0.jar](https://github.com/LinuxOega/plugin-tetris/releases/download/v1.0.0/plugin-tetris-1.0.0.jar) | 38,665 B | `9fd383966370de9352c2d62305498f6c530957ea6fad7053f83128ee9192dd2e` |
+
+发布页：[LinuxOega/plugin-tetris Releases](https://github.com/LinuxOega/plugin-tetris/releases)，含各版本更新说明与附件。源码在独立仓库 [LinuxOega/plugin-tetris](https://github.com/LinuxOega/plugin-tetris)，与 2048 插件的仓库互不影响。
+
+> Release 附件实际从 `objects.githubusercontent.com` 下载，部分网络环境下不可达；此时用下面的本地构建，产物与 Release 完全一致。`.gitignore` 有意不把 JAR 放进源码仓库。
+
 ## 环境要求与构建
 
 | 依赖 | 版本 |
