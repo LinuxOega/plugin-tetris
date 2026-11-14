@@ -10,7 +10,7 @@ spec:
     website: https://www.halo.run
   logo: logo.svg
   displayName: "俄罗斯方块"
-  description: "为任意 Halo 站点提供俄罗斯方块：插件启动即自动创建已发布的 /tetris 页面（https://你的域名/tetris），含独立游戏页与全站排行榜；不注册 Console 菜单与导航项，零域名配置。"
+  description: "为任意 Halo 站点提供俄罗斯方块：插件启动即自动创建已发布的 /tetris 页面（https://你的域名/tetris），含独立游戏页与全站排行榜；不注册 Console 菜单与导航项，零域名配置，自适应视口。"
   license:
     - name: "MIT"
       url: "https://opensource.org/licenses/MIT"

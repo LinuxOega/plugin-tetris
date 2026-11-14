@@ -3,23 +3,25 @@
            → 页面设置里把「别名 / slug」填为 tetris → 发布
      访问：https://你的域名/tetris（安装到哪个域名就用哪个域名）
      1.0.0 起插件启动会自动建这个页面，本片段仅作为手动兜底。
-     标题与说明沿用主题排版；卡片与游戏页内部跟随主题明暗、色相。 -->
-<section style="max-width:920px;margin:0 auto;padding:8px 0 24px">
-  <h2 style="margin:0 0 8px;font-size:28px;line-height:1.3">俄罗斯方块</h2>
-  <p style="margin:0 0 18px;font-size:14px;line-height:1.8;opacity:.8">
+     标题与说明沿用主题排版；卡片与游戏页内部跟随主题明暗、色相。
+     自适应视口：iframe 高度按父视口剩余空间计算，游戏页棋盘同步缩放；浏览器保持 100% 缩放即可直接玩，无需缩小网页。
+-->
+<section style="max-width:920px;margin:0 auto;padding:4px 0 12px">
+  <h2 style="margin:0 0 6px;font-size:clamp(20px,2.4vw,26px);line-height:1.3">俄罗斯方块</h2>
+  <p style="margin:0 0 8px;font-size:14px;line-height:1.6;opacity:.8">
     堆叠方块、消除整行。支持方向键 / WASD、空格硬降、C 暂存与触屏操作，成绩进入站点排行榜。
   </p>
 
-  <div style="padding:8px;border-radius:var(--radius-large,1rem);background:var(--card-bg,#fff);border:1px solid color-mix(in oklab,var(--primary,#7c6cf0) 16%,transparent);box-shadow:0 6px 24px -16px rgba(0,0,0,.25)">
+  <div style="padding:6px;border-radius:var(--radius-large,1rem);background:var(--card-bg,#fff);border:1px solid color-mix(in oklab,var(--primary,#7c6cf0) 16%,transparent);box-shadow:0 6px 24px -16px rgba(0,0,0,.25)">
     <iframe
       src="/plugins/plugin-tetris/assets/tetris/index.html"
       data-tetris
       title="俄罗斯方块"
       loading="lazy"
-      style="display:block;width:100%;height:clamp(720px,92vh,900px);border:0;border-radius:12px"></iframe>
+      style="display:block;width:100%;height:clamp(420px,calc(100vh - 150px),860px);height:clamp(420px,calc(100dvh - 150px),860px);border:0;border-radius:12px"></iframe>
   </div>
 
-  <p style="margin:12px 0 0;font-size:13px;line-height:1.7;opacity:.75">
+  <p style="margin:8px 0 0;font-size:13px;line-height:1.7;opacity:.75">
     点击游戏区域后使用方向键 / WASD 操作；手机可用页面内触屏按钮或滑动棋盘。
     <a href="/plugins/plugin-tetris/assets/tetris/index.html" target="_blank" rel="noopener">新窗口全屏打开 ↗</a>
   </p>

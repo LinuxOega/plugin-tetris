@@ -2,11 +2,13 @@
      粘贴到文章 HTML 块 / 自定义页面 / 主题模板。零脚本、同源相对路径。
      容器复用 Ethereal 的 --card-bg / --primary / --radius-large 变量，
      游戏页内部会自动跟随站点的明暗切换与主题色相（同源 localStorage）。
-     入口约定：https://你的域名/tetris -->
-<div style="padding:8px;border-radius:var(--radius-large,1rem);background:var(--card-bg,#fff);border:1px solid color-mix(in oklab,var(--primary,#7c6cf0) 16%,transparent);box-shadow:0 6px 24px -16px rgba(0,0,0,.25)">
+     入口约定：https://你的域名/tetris
+     自适应视口：iframe 高度按父视口剩余空间计算，游戏页棋盘同步缩放；浏览器保持 100% 缩放即可直接玩，无需缩小网页。
+-->
+<div style="padding:6px;border-radius:var(--radius-large,1rem);background:var(--card-bg,#fff);border:1px solid color-mix(in oklab,var(--primary,#7c6cf0) 16%,transparent);box-shadow:0 6px 24px -16px rgba(0,0,0,.25)">
   <iframe
     src="/plugins/plugin-tetris/assets/tetris/index.html"
     title="俄罗斯方块"
     loading="lazy"
-    style="display:block;width:100%;height:clamp(720px,92vh,900px);border:0;border-radius:12px"></iframe>
+    style="display:block;width:100%;height:clamp(420px,calc(100vh - 150px),860px);height:clamp(420px,calc(100dvh - 150px),860px);border:0;border-radius:12px"></iframe>
 </div>

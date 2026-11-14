@@ -2,9 +2,11 @@
      粘贴位置：文章的 HTML 块 / 自定义页面 / 主题模板任意位置。
      同源相对路径，兼容 X-Frame-Options: SAMEORIGIN；不含任何脚本。
      入口约定：https://你的域名/tetris（由安装插件的站点域名决定）。
-     提示：iframe 需要点击一次游戏区域，方向键才会被捕获。 -->
+     提示：iframe 需要点击一次游戏区域，方向键才会被捕获。
+     自适应视口：iframe 高度按父视口剩余空间计算，游戏页棋盘同步缩放；浏览器保持 100% 缩放即可直接玩，无需缩小网页。
+-->
 <iframe
   src="/plugins/plugin-tetris/assets/tetris/index.html"
   title="俄罗斯方块"
   loading="lazy"
-  style="display:block;width:100%;max-width:920px;height:clamp(720px,92vh,900px);border:0"></iframe>
+  style="display:block;width:100%;max-width:920px;height:clamp(420px,calc(100vh - 150px),860px);height:clamp(420px,calc(100dvh - 150px),860px);border:0"></iframe>

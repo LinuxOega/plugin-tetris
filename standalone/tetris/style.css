@@ -126,7 +126,17 @@ body {
   padding: 14px;
 }
 
-.board-wrap { position: relative; width: min(100%, 320px); margin: 0 auto; }
+/* Fit-to-viewport fallback: the 10x20 board must shrink with the available
+   viewport height (dvh = the iframe height when embedded). 50dvh is half the
+   height because the board is twice as tall as it is wide; 145px covers the
+   header, toolbar, controls and footer. app.js writes an exact inline width
+   once layout is measurable. */
+.board-wrap {
+  position: relative;
+  width: min(100%, 320px, calc(50vh - 145px));
+  width: min(100%, 320px, calc(50dvh - 145px));
+  margin: 0 auto;
+}
 .board {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
@@ -220,3 +230,29 @@ body {
 .rank-empty[hidden] { display: none; }
 
 .footer { margin-top: 22px; text-align: center; font-size: 12px; color: var(--muted); }
+
+/* ---- Embedded fit-to-viewport --------------------------------------------
+   The host Halo page already has a title, description and navigation. Removing
+   the duplicated chrome gives the 10x20 board the whole frame height, so no
+   browser zoom-out is needed. app.js adds `is-embedded`; without JS the dvh
+   fallback above still keeps the board inside the frame. */
+html.is-embedded body { padding: 8px 12px 10px; }
+html.is-embedded .back-link { display: none; }
+html.is-embedded .heading h1 { font-size: 22px; }
+html.is-embedded .heading p,
+html.is-embedded .footer,
+html.is-embedded .hint { display: none; }
+html.is-embedded .header { align-items: center; gap: 8px; margin-bottom: 8px; }
+html.is-embedded .scores { gap: 6px; }
+html.is-embedded .score-box { min-width: 64px; padding: 4px 9px; }
+html.is-embedded .score-box strong { font-size: 16px; }
+html.is-embedded .toolbar { margin-bottom: 4px; gap: 6px; }
+html.is-embedded .toolbar input, html.is-embedded .btn { padding: 5px 9px; }
+html.is-embedded .status { min-height: 0; margin: 0 0 4px; }
+html.is-embedded .layout { gap: 12px; }
+html.is-embedded .game,
+html.is-embedded .preview-panel,
+html.is-embedded .rank-panel { padding: 8px; border-radius: 12px; }
+html.is-embedded .touch-controls { margin-top: 8px; gap: 4px; }
+html.is-embedded .touch-controls button { padding: 6px 0; }
+html.is-embedded .side { max-height: calc(100dvh - 20px); overflow: auto; }

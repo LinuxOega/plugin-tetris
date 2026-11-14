@@ -161,6 +161,129 @@
     apply();
   }
 
+  // ---- Fit-to-viewport ---------------------------------------------------
+  // Keep the whole game visible at 100% browser zoom. Embedded in the
+  // same-origin Halo page, the iframe is resized to the space left in the host
+  // viewport and the 10x20 board is sized from the height left after the
+  // header, toolbar and controls. Everything is measured at runtime, so it
+  // also works after a window resize, a phone rotation or a taller theme.
+  function setupFitToViewport() {
+    const root = document.documentElement;
+    if (embedded) root.classList.add('is-embedded');
+
+    const appEl = document.querySelector('.app');
+    const wrap = document.querySelector('.board-wrap');
+    const gameEl = document.querySelector('.game');
+    if (!appEl || !wrap || !gameEl) return;
+    // No layout engine (jsdom / hidden iframe): rely on the CSS dvh fallback
+    // and do not register observers or timers that could outlive the document.
+    const probe = appEl.getBoundingClientRect();
+    if (!probe || !probe.height) return;
+
+    let frame = null;
+    try {
+      if (embedded && window.frameElement && window.parent !== window) {
+        frame = window.frameElement;
+      }
+    } catch (e) {
+      frame = null; // cross-origin frame: the host keeps its own height
+    }
+
+    const num = (value) => (Number.isFinite(value) ? value : 0);
+    const heightOf = (selector) => {
+      const el = document.querySelector(selector);
+      if (!el || el.hidden) return 0;
+      const style = window.getComputedStyle(el);
+      if (style.display === 'none') return 0;
+      return el.getBoundingClientRect().height
+        + num(parseFloat(style.marginTop)) + num(parseFloat(style.marginBottom));
+    };
+
+    const FRAME_MIN = 420;
+    const FRAME_MAX = 880;
+    const BOARD_MAX = 320;
+    const BOARD_MIN = 150;
+    const BOARD_RATIO = 2; // 10 columns x 20 rows
+    let lastFrame = -1;
+    let lastBoard = -1;
+    let queued = false;
+
+    function fitFrame() {
+      if (!frame || !frame.style) return;
+      try {
+        const viewport = window.parent.innerHeight;
+        if (!viewport) return;
+        const top = frame.getBoundingClientRect().top;
+        // frameElement's rect is relative to the host document viewport. While
+        // the iframe is still below the fold (lazy loading, long article),
+        // keep the host page's dvh-based height instead of shrinking it.
+        if (top > viewport * 0.85) return;
+        const offset = Math.max(0, Math.min(num(top), viewport));
+        const wanted = Math.round(Math.max(FRAME_MIN,
+          Math.min(FRAME_MAX, viewport - offset - 24)));
+        if (wanted !== lastFrame) {
+          lastFrame = wanted;
+          frame.style.height = `${wanted}px`;
+        }
+      } catch (e) { /* restricted frame: keep host height */ }
+    }
+
+    function fitBoard() {
+      const viewport = window.innerHeight || root.clientHeight;
+      if (!viewport) return;
+      const bodyStyle = window.getComputedStyle(document.body);
+      const gameStyle = window.getComputedStyle(gameEl);
+      const layoutEl = document.querySelector('.layout');
+      const layoutStyle = layoutEl ? window.getComputedStyle(layoutEl) : null;
+      const chrome = num(parseFloat(bodyStyle.paddingTop))
+        + num(parseFloat(bodyStyle.paddingBottom))
+        + num(parseFloat(gameStyle.paddingTop))
+        + num(parseFloat(gameStyle.paddingBottom))
+        + (layoutStyle ? num(parseFloat(layoutStyle.marginTop)) : 0)
+        + heightOf('.back-link') + heightOf('.header') + heightOf('.toolbar')
+        + heightOf('.status') + heightOf('.hint') + heightOf('.touch-controls')
+        + heightOf('.footer') + 12;
+      const availableHeight = viewport - chrome;
+      const availableWidth = gameEl.clientWidth
+        - num(parseFloat(gameStyle.paddingLeft))
+        - num(parseFloat(gameStyle.paddingRight));
+      const width = Math.max(BOARD_MIN, Math.floor(Math.min(
+        BOARD_MAX, availableWidth, availableHeight / BOARD_RATIO
+      )));
+      if (width !== lastBoard) {
+        lastBoard = width;
+        wrap.style.width = `${width}px`;
+      }
+    }
+
+    const schedule = () => {
+      if (queued) return;
+      queued = true;
+      const raf = window.requestAnimationFrame || ((cb) => setTimeout(cb, 16));
+      raf(() => {
+        queued = false;
+        fitFrame();
+        fitBoard();
+      });
+    };
+
+    fitFrame();
+    schedule();
+    window.addEventListener('resize', schedule);
+    if (frame) {
+      try {
+        window.parent.addEventListener('resize', schedule);
+        window.parent.addEventListener('scroll', schedule, { passive: true });
+      } catch (e) { /* noop */ }
+    }
+    if (window.ResizeObserver) {
+      new window.ResizeObserver(schedule).observe(appEl);
+    }
+    if (document.fonts && document.fonts.ready && document.fonts.ready.then) {
+      document.fonts.ready.then(schedule).catch(() => {});
+    }
+  }
+
   // ---- Board and previews -------------------------------------------------
   const cells = [];
   for (let i = 0; i < core.ROWS * core.COLS; i += 1) {
@@ -471,6 +594,7 @@
   }
 
   setupThemeSync();
+  setupFitToViewport();
   render();
   syncButtons();
   loadRank();
