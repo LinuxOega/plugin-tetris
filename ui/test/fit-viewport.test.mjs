@@ -83,9 +83,22 @@ test('controller never gives up on a frame that starts below the fold', () => {
   // 720px iframe created by v1.0.0 pages untouched and forced browser zoom-out.
   assert.doesNotMatch(app, /top > viewport \* 0\.85/);
   assert.match(app, /FRAME_MIN = 240/);
-  assert.match(app, /COMFORT_MIN = 420/);
+  assert.match(app, /COMFORT_MIN = 720/);
   assert.match(app, /host\.scrollTo/);
   assert.match(app, /autoScrolled/);
+});
+
+test('game document shrinks itself instead of scrolling inside the iframe', () => {
+  // The 100%-zoom contract covers the *inside* of the frame too: no inner
+  // scrollbar, even when the theme leaves only a short iframe.
+  assert.match(app, /function fitContentToFrame\(\)/);
+  assert.match(app, /fitContentToFrame\(\)/);
+  assert.match(app, /overflow = 'hidden'/);
+  assert.match(app, /transformOrigin/);
+  for (const file of ['standalone/tetris/app.js', 'standalone/tetris.html']) {
+    assert.match(read(root, file), /fitContentToFrame/,
+      `${file} must carry the same zero-inner-scroll fallback`);
+  }
 });
 
 test('standalone and single-file builds carry the same fit logic', () => {
@@ -132,5 +145,41 @@ test('explicit embedded config marks the document for compact layout', () => {
   assert.ok(doc.documentElement.classList.contains('is-embedded'));
   assert.equal(doc.querySelector('.board-wrap').style.width, '',
     'measurement is skipped when there is no layout engine');
+  dom.window.close();
+});
+
+test('inner content is uniformly scaled when taller than the iframe', () => {
+  // Simulate a real layout engine: elements have a non-zero rect and the whole
+  // .app is 1500px tall inside a much shorter frame. Without the fallback the
+  // game document would need its own scrollbar at 100% browser zoom.
+  const dom = new JSDOM(html, {
+    url: 'https://local.invalid/tetris/index.html',
+    runScripts: 'outside-only',
+    pretendToBeVisual: true,
+    beforeParse(window) {
+      window.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+      window.Math.random = () => 0;
+      window.Element.prototype.getBoundingClientRect = function () {
+        return {
+          x: 0, y: 0, top: 0, left: 0, right: 800, bottom: 400,
+          width: 800, height: 400, toJSON() { return {}; },
+        };
+      };
+      Object.defineProperty(window.HTMLElement.prototype, 'scrollHeight', {
+        configurable: true,
+        get() { return this.classList && this.classList.contains('app') ? 1500 : 0; },
+      });
+      Object.defineProperty(window.HTMLElement.prototype, 'clientWidth', {
+        configurable: true, get() { return 800; },
+      });
+    },
+  });
+  dom.window.eval(core);
+  dom.window.eval(app);
+  const doc = dom.window.document;
+  assert.match(doc.querySelector('.app').style.transform, /scale\(/,
+    'over-tall content must be scaled instead of scrolled');
+  assert.equal(doc.documentElement.style.overflow, 'hidden');
+  assert.equal(doc.body.style.overflow, 'hidden');
   dom.window.close();
 });

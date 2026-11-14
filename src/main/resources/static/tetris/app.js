@@ -72,6 +72,10 @@
   // page already has navigation, and static deployments do not show the link.
   const backLink = $('back-link');
   const embedded = config.embedded === true || window.self !== window.top;
+  // frameElement is a second, independent signal: proxied or sandboxed frames
+  // do not always compare reliably against window.top.
+  let inFrame = embedded;
+  try { inFrame = embedded || !!window.frameElement; } catch (e) { /* keep */ }
   if (backLink && API_BASE && !embedded) {
     backLink.href = typeof config.homeUrl === 'string' && config.homeUrl.trim()
       ? config.homeUrl.trim()
@@ -167,9 +171,35 @@
   // viewport and the 10x20 board is sized from the height left after the
   // header, toolbar and controls. Everything is measured at runtime, so it
   // also works after a window resize, a phone rotation or a taller theme.
+  // Final guarantee: the game document itself must never need a scrollbar.
+  // When the whole interface is taller than the iframe, shrink it uniformly.
+  // A smaller game is explicitly preferred over scrolling inside the game.
+  function fitContentToFrame() {
+    const appEl = document.querySelector('.app');
+    if (!appEl) return;
+    appEl.style.transform = '';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    const usable = window.innerHeight - 12;
+    if (!usable) return;
+    const style = window.getComputedStyle(document.body);
+    const padTop = parseFloat(style.paddingTop) || 0;
+    const padBottom = parseFloat(style.paddingBottom) || 0;
+    const natural = appEl.scrollHeight + padTop + padBottom;
+    if (!natural || natural <= usable) return;
+    const scale = Math.max(0.4, usable / natural);
+    appEl.style.transformOrigin = 'top center';
+    appEl.style.transform = `scale(${scale})`;
+    // Hiding it on both body and html avoids viewport scrollbar propagation
+    // differences between browsers. The scaled content already fits exactly.
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+  }
+
   function setupFitToViewport() {
     const root = document.documentElement;
-    if (embedded) root.classList.add('is-embedded');
+    fitContentToFrame(); // runs before the layout probe: always zero inner scrolling
+    if (inFrame) root.classList.add('is-embedded');
 
     const appEl = document.querySelector('.app');
     const wrap = document.querySelector('.board-wrap');
@@ -178,11 +208,22 @@
     // No layout engine (jsdom / hidden iframe): rely on the CSS dvh fallback
     // and do not register observers or timers that could outlive the document.
     const probe = appEl.getBoundingClientRect();
-    if (!probe || !probe.height) return;
+    if (!probe || !probe.height) {
+      // A frame that is not laid out yet (or jsdom without a layout engine)
+      // still gets the zero-scroll fallback, then retries once on load.
+      fitContentToFrame();
+      window.addEventListener('load', () => {
+        try {
+          const again = appEl.getBoundingClientRect();
+          if (again && again.height) setupFitToViewport();
+        } catch (e) { /* noop */ }
+      }, { once: true });
+      return;
+    }
 
     let frame = null;
     try {
-      if (embedded && window.frameElement && window.parent !== window) {
+      if (inFrame && window.frameElement && window.parent !== window) {
         frame = window.frameElement;
       }
     } catch (e) {
@@ -205,7 +246,7 @@
     const FRAME_MIN = 240;
     const FRAME_MAX = 880;
     const FRAME_GAP = 16;
-    const COMFORT_MIN = 420;
+    const COMFORT_MIN = 720;
     const BOARD_MAX = 320;
     const BOARD_MIN = 100;
     const BOARD_RATIO = 2; // 10 columns x 20 rows
@@ -282,8 +323,12 @@
       const raf = window.requestAnimationFrame || ((cb) => setTimeout(cb, 16));
       raf(() => {
         queued = false;
+        // Remove last frame's scale so every measurement uses unscaled layout.
+        const measuredApp = document.querySelector('.app');
+        if (measuredApp) measuredApp.style.transform = '';
         fitFrame();
         fitBoard();
+        fitContentToFrame();
       });
     };
 

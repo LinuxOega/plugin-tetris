@@ -255,4 +255,4 @@ html.is-embedded .preview-panel,
 html.is-embedded .rank-panel { padding: 8px; border-radius: 12px; }
 html.is-embedded .touch-controls { margin-top: 8px; gap: 4px; }
 html.is-embedded .touch-controls button { padding: 6px 0; }
-html.is-embedded .side { max-height: calc(100dvh - 20px); overflow: auto; }
+html.is-embedded .side { overflow: hidden; }

@@ -77,7 +77,8 @@ plugin-tetris/
 
 | 版本 | 文件 | 大小 | SHA-256 |
 | --- | --- | --- | --- |
-| **v1.0.2（最新）** | [plugin-tetris-1.0.2.jar](https://github.com/LinuxOega/plugin-tetris/releases/download/v1.0.2/plugin-tetris-1.0.2.jar) | 41,797 B | `e161abb0b77d6591563b605c2cd9d4ec30769b5d4316b4942fdecacf7c1b4e05` |
+| **v1.0.3（最新）** | [plugin-tetris-1.0.3.jar](https://github.com/LinuxOega/plugin-tetris/releases/download/v1.0.3/plugin-tetris-1.0.3.jar) | 42,442 B | `493f92fd3ba39dedf15c6c2a7c3528ecbe5cd6c973f433f2aef8061c9a8a31ef` |
+| v1.0.2 | [plugin-tetris-1.0.2.jar](https://github.com/LinuxOega/plugin-tetris/releases/download/v1.0.2/plugin-tetris-1.0.2.jar) | 41,797 B | `e161abb0b77d6591563b605c2cd9d4ec30769b5d4316b4942fdecacf7c1b4e05` |
 | v1.0.1 | [plugin-tetris-1.0.1.jar](https://github.com/LinuxOega/plugin-tetris/releases/download/v1.0.1/plugin-tetris-1.0.1.jar) | 40,826 B | `a564340e64dc0fd00ae868db19f8ebfa71e1c37be0f5b246bae1c1d1381a07cb` |
 
 发布页：[LinuxOega/plugin-tetris Releases](https://github.com/LinuxOega/plugin-tetris/releases)，含各版本更新说明与附件。源码在独立仓库 [LinuxOega/plugin-tetris](https://github.com/LinuxOega/plugin-tetris)，与 2048 插件的仓库互不影响。
@@ -102,7 +103,7 @@ node scripts/build-blog-pack.mjs
 
 # 3) 一条命令完成：Node 测试 + Java 编译/单测 + JAR 打包
 ./gradlew build          # Windows: .\gradlew.bat build
-# 产物：build/libs/plugin-tetris-1.0.2.jar（同一份 JAR 可用于任意域名）
+# 产物：build/libs/plugin-tetris-1.0.3.jar（同一份 JAR 可用于任意域名）
 ```
 
 `ui/` 只承担「规则唯一源码 + Node 测试」，`build.gradle` 的 `jar` 显式 `exclude 'ui/**'` 与 `exclude 'ui-plugin.json'`：Halo 靠 `resources/ui/ui-plugin.json` 识别 Console 插件入口，JAR 里没有这个文件就不会注册侧边栏菜单。
@@ -148,17 +149,17 @@ Halo 把页面正文存在 `Snapshot` 里，只有「已发布 + 公开 + 有 `r
 
 ### 自适应视口（无需缩小网页）
 
-**1.0.2 起不用再按 `Ctrl+-` 缩小浏览器。** 旧版 iframe 高度被固定为 720–900px，游戏页内部又是固定 320px 宽（10×20）的棋盘加两栏侧栏，外层主题还有标题与说明，三段高度相加超过一屏，只能靠浏览器缩放才能看全。现在改成三层自适应：
+**1.0.3 起不用再按 `Ctrl+-` 缩小浏览器。** 旧版 iframe 高度被固定为 720–900px，游戏页内部又是固定 320px 宽（10×20）的棋盘加两栏侧栏，外层主题还有标题与说明，三段高度相加超过一屏，只能靠浏览器缩放才能看全。现在改成三层自适应：
 
 | 层 | 做法 |
 | --- | --- |
 | 父页面 iframe | 片段高度改为 `clamp(240px, calc(100dvh - 380px), 620px)`（同时保留 `100vh` 兜底），即视口减去站点头部后的剩余空间 |
-| 同源 iframe 运行时 | 游戏页通过 `window.frameElement` 直接按父视口剩余高度修正 iframe 高度（240–880px）；窗口缩放、手机旋转、主题头部高度变化都会重算 |
+| 同源 iframe 运行时 | 游戏页通过 `window.frameElement` 直接按父视口剩余高度修正 iframe 高度（240–880px）；内容超高时整体等比缩小并隐藏内部滚动条；窗口缩放、手机旋转、主题头部高度变化都会重算 |
 | 游戏页内部 | iframe 内自动启用 `is-embedded` 精简重复的标题 / 说明 / 提示 / 页脚；棋盘按「视口高度 − 页头 − 工具栏 − 触屏按钮」除以 2 动态计算宽度，CSS 另有 `50dvh` 兜底，JS 被禁用也不溢出 |
 
-因此**已装过旧版、页面里仍是 720px 旧 iframe 也无需重建页面**：更新 JAR 后，游戏页会从 iframe 内部按父视口剩余空间直接改写外层高度；若主题头部占用太多、剩余空间不足 420px，页面会自动定位到游戏区，让 iframe 占满整个视口——打开就是 100% 缩放可玩，不用手动下翻，也不用 `Ctrl+-`。同时插件启动时会把**由旧版本插件生成的页面正文**自动升级为新版片段（你自己编辑过的内容不会被覆盖）。若想手动替换，后台编辑该页面，HTML / 源码模式整段粘贴 `deploy/ethereal/page.html` 即可。
+因此**已装过旧版、页面里仍是 720px 旧 iframe 也无需重建页面**：更新 JAR 后，游戏页会从 iframe 内部按父视口剩余空间直接改写外层高度；主题头部占用太多时页面会自动定位到游戏区，让 iframe 占满整个视口。更关键的是 **1.0.3 起游戏页内部也零滚动**：当内容自然高度超过 iframe 高度时，整个界面会等比缩小（宁可小一点也不出现内部滚动条），并隐藏 iframe 自身的滚动条——浏览器保持 100% 缩放，打开就能直接玩，既不用下翻也不用 `Ctrl+-`。同时插件启动时会把**由旧版本生成的页面正文**自动升级为新版片段（你自己编辑过的内容不会被覆盖）。若想手动替换，后台编辑该页面，HTML / 源码模式整段粘贴 `deploy/ethereal/page.html` 即可。
 
-直接全屏打开 `/plugins/plugin-tetris/assets/tetris/index.html`，或双击本地 `standalone/tetris.html`，同样自适应；只是没有父页面可调整，走的是 CSS `dvh` 兜底加棋盘动态计算。契约测试 `ui/test/fit-viewport.test.mjs` 锁死了「不得再出现固定 iframe 高度」与无布局环境下的降级行为。
+直接全屏打开 `/plugins/plugin-tetris/assets/tetris/index.html`，或双击本地 `standalone/tetris.html`，同样自适应；只是没有父页面可调整，走的是 CSS `dvh` 兜底加棋盘动态计算。契约测试 `ui/test/fit-viewport.test.mjs` 锁死了「不得再出现固定 iframe 高度」「iframe 内部零滚动」与无布局环境下的降级行为。
 
 ### 3. 部署后核对清单
 
@@ -237,7 +238,7 @@ window.TETRIS_CONFIG = { defaultHue: 250 };        // 默认主题色相
 - ✅ `npm test`：**35 项全部通过** — 规则 17（7-bag、旋转踢墙、碰撞、消行计分、等级、Hold、终局、不可变性、RNG 确定性）+ 契约 11（域名无关、多域名多协议请求一致、子路径、自动建页、DTO 字段、单文件离线包、主题同步、页面渲染 + 键盘可玩）+ **自适应视口契约 7**（无固定 iframe 高度、dvh 兜底、运行时测量、静态包同步、jsdom 降级）
 - ✅ JUnit 5 + Mockito：`TetrisPageInitializerTest` 5 项通过
 - ✅ `./gradlew build`：BUILD SUCCESSFUL（42 秒，9 个任务）
-- ✅ JAR 内容核验：`plugin-tetris-1.0.2.jar`（41,797 B / 27 条目，8 个 `.class`）；`plugin.yaml` version 1.0.2 / requires >=2.27.0；4 个组件（`ScoreEndpoint` / `ScoreService` / `TetrisPageInitializer` / `TetrisPlugin`）；含 `page/tetris.html`、`static/tetris/` 4 个文件、2 个 extensions YAML、`META-INF/plugin-components.idx`；**无 `ui/`、无 `ui-plugin.json`、无 `menu-item.yaml`、无任何硬编码域名**
+- ✅ JAR 内容核验：`plugin-tetris-1.0.3.jar`（42,442 B / 27 条目，8 个 `.class`）；`plugin.yaml` version 1.0.3 / requires >=2.27.0；4 个组件（`ScoreEndpoint` / `ScoreService` / `TetrisPageInitializer` / `TetrisPlugin`）；含 `page/tetris.html`、`static/tetris/` 4 个文件、2 个 extensions YAML、`META-INF/plugin-components.idx`；**无 `ui/`、无 `ui-plugin.json`、无 `menu-item.yaml`、无任何硬编码域名**
 
 **仍未验证**：本机无 Docker、无本地 Halo 实例，因此「启用插件后自动建页、真实浏览器中 `/tetris` 的路由与视觉表现」需要在目标站点上传 JAR 后确认。构建契约、片段同源性、页面可玩性已由自动化测试覆盖。
 
